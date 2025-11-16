@@ -71,25 +71,6 @@ from the air pollution monitor at the RDU
 airport. This exposure data is messy and will need to be processed. You will 
 write a function to process your data and do some exploratory EDA using plots.
 
-# Project Tasks
-
-Function
-You have three .csv files containing daily air quality measurements for 
-2018-2020. Each file includes the date and concentrations of CO, PM2.5, and O3.
-The 2020 dataset only includes data through April. Create a function to process
-the data. Run the function on the data in each .csv file.
-Your function should:
-• Rename the pollutant concentration columns with more appropriate variable 
-names (no spaces, short, informative).
-• Format the date variable correctly.
-• Some days have multiple measurements for a single pollutant. For these days, 
-calculate the daily average.
-• Remove any duplicate rows.
-• Some of the pollutants have measurement error issues. Loop through the 
-pollutants and set any measured concentration that is negative to zero. (Can 
-also use apply() or map() functions).
-
-Run your function on the three datasets
 
 ```{r, echo=FALSE, results='hide'}
 # function part one
@@ -314,21 +295,7 @@ head(aq_full) # checking column names
 # will now be using aq_full dataset from here on out
 ```
 
-# Plot
-
-You will create two plots.
-• The first plot will have month on the x-axis and CO and O3 concentration on 
-the y-axis. The plot should display monthly averages, averaged over the 3 years.
-Include 95% confidence interval error bars around the points. Make CO and O3 
-different colors.
-• The second plot will have month on the x-axis and PM2.5 concentration on the 
-y-axis. Include year as different colors. Use whatever geom you think best 
-displays the data. There is no "correct" geom, but some are better than others.
-Consider readability - what conveys any patterns in your data best?
-For both plots, be thoughtful in your color choices. Consider point size and 
-density. Include labels, titles, legends, etc. - anything needed to make it 
-readable. 
-
+# Plots
 
 ```{r, warning = FALSE, echo = FALSE, results= 'hide'}
 # plot 1
@@ -368,7 +335,7 @@ ggplot(aq_monthly, aes( x = Month)) +
   scale_color_manual(values = c("CO" = "dodgerblue2", "O3" = "darkorange1")) + 
   # chose colors that stand out best
   labs(
-    title = "Monthly Average CO and Ozone Concentrations (2018-2020)",
+    title = "Plot1.Monthly Average CO and Ozone Concentrations (2018-2020)",
     y = "Concentrations",
     x = "Month",
     color = "Pollutant" # to fix legend
@@ -393,7 +360,7 @@ ggplot(pm_monthly, aes(x = Month, y = PM_lvl, color = Years)) +
   facet_wrap(~ Years, ncol = 1, scales = "free_x")   +
   scale_color_manual(values = c("2018" = "mediumvioletred", "2019" = "seagreen3", "2020" = "royalblue2")) +
   labs(
-    title = "PM2.5 Concentration by Month (2018-2020)",
+    title = "Plot2.PM2.5 Concentration by Month (2018-2020)",
     y = "PM2.5",
     x = "Month",
     color = "Year"
