@@ -1,8 +1,10 @@
 ---
 title: "Project2_Khan"
-author: "Zahra Kham"
+author: "Zahra Khan"
 format: html 
 ---
+
+[Zahra's Project2 GitHub](https://github.com/zahra-khan2/biostat721_project2.git)
 
 ```{r, echo = FALSE, results='hide', warning= FALSE, message= FALSE}
 library(here)
@@ -323,6 +325,9 @@ head(aq_monthly)
 # now need to find  sd -> SE, to get our C.I. at 95%
 ```
 
+## Plot 1
+
+Text here.
 
 ```{r, warning = FALSE, echo = FALSE}
 
@@ -342,8 +347,13 @@ ggplot(aq_monthly, aes( x = Month)) +
   ) + 
   theme_bw()
 
+ggsave(filename = "Plot1.png")
+
 ```
 
+## Plot 2
+
+Text here. 
 
 ```{r, fig.width=10, fig.height= 12, warning = FALSE, echo = FALSE}
 # plot 2 
@@ -367,6 +377,7 @@ ggplot(pm_monthly, aes(x = Month, y = PM_lvl, color = Years)) +
   ) + 
   theme_bw()
 
+ggsave(filename = "Plot2.png")
 
 ```
 
