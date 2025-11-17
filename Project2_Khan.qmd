@@ -1,7 +1,7 @@
 ---
 title: "Project2_Khan"
 author: "Zahra Khan"
-format: html 
+format: docx 
 ---
 
 [Zahra's Project2 GitHub](https://github.com/zahra-khan2/biostat721_project2.git)
@@ -10,16 +10,17 @@ format: html
 library(here)
 library(tidyverse)
 library(RColorBrewer)
+library(dplyr) # to fix lintr issues with my code...
+library(lubridate) # to remove lintr issues
 
-
-
+# data loading
 aq18 <- read.csv("AQ_2018.csv")
 aq19 <- read.csv("AQ_2019.csv")
 aq20 <- read.csv("AQ_2020.csv")
 ```
 
 ```{r, echo = FALSE, results='hide', warning= FALSE, fig.show='hide'}
-# just examining what I have 
+# just examining what columns I have
 colnames(aq18)
 colnames(aq19)
 colnames(aq20)
@@ -30,11 +31,11 @@ boxplot(aq19$Daily.Max.8.hour.CO.Concentration) # more outliers than 18
 boxplot(aq20$Daily.Max.8.hour.CO.Concentration) # few but noticeable outliers
 
 # PM
-boxplot(aq18$Daily.Mean.PM2.5.Concentration) 
+boxplot(aq18$Daily.Mean.PM2.5.Concentration)
 hist(aq18$Daily.Mean.PM2.5.Concentration) # normally dist, some negative values
 hist(aq19$Daily.Mean.PM2.5.Concentration) # all pos
 hist(aq20$Daily.Mean.PM2.5.Concentration) # all pos
-boxplot(aq20$Daily.Mean.PM2.5.Concentration) 
+boxplot(aq20$Daily.Mean.PM2.5.Concentration)
 # Ozone
 boxplot(aq18$Daily.Max.8.hour.Ozone.Concentration)# looks good
 boxplot(aq19$Daily.Max.8.hour.Ozone.Concentration) # no outliers, nice
@@ -42,6 +43,7 @@ boxplot(aq20$Daily.Max.8.hour.Ozone.Concentration) # low conc outliers
 
 ```
 ```{r, echo=FALSE, results='hide'}
+# checking for missing and other error in observations
 unique(aq18$units_CO) #NA
 unique(aq18$units_PM) # NA
 unique(aq18$units_O3) # NA
@@ -70,26 +72,25 @@ She provides data on health system utilization (i.e., emergency department
 visits, hospitalizations, etc.) for SCD and you obtain
 air pollution data from the EPA. The pollutant data are raw measurements taken 
 from the air pollution monitor at the RDU
-airport. This exposure data is messy and will need to be processed. You will 
-write a function to process your data and do some exploratory EDA using plots.
+airport. 
 
 
 ```{r, echo=FALSE, results='hide'}
 # function part one
-# I will show progress of my function and at the end will only have the finished one run
+# I will show progress of my function in parts to get to thefinal function
 aq_process <- function(data1) {
   # want to first rename pollutant concentration cols
-  data1 <- data1 |> 
+  data1 <- data1 |>
     mutate(
-      Dates = mdy(Date),
-      CO_lvl = Daily.Max.8.hour.CO.Concentration,
-      CO_units = units_CO,
-      PM_lvl = Daily.Mean.PM2.5.Concentration,
-      PM_units = units_PM,
-      OZONE_lvl = Daily.Max.8.hour.Ozone.Concentration,
-      OZONE_units = units_O3
-      ) |> 
-    select(
+      Dates = mdy(Date), # fixing the formatting of dates
+      CO_lvl = Daily.Max.8.hour.CO.Concentration, # changing CO variable name
+      CO_units = units_CO, # renaming unit variable for consistency
+      PM_lvl = Daily.Mean.PM2.5.Concentration, # renaming PM2.5
+      PM_units = units_PM, 
+      OZONE_lvl = Daily.Max.8.hour.Ozone.Concentration, # renaming Ozone
+      OZONE_units = units_O3 
+    ) |>
+    select( # removing old variables
       -Date,
       -Daily.Max.8.hour.CO.Concentration,
       -units_CO,
@@ -97,8 +98,7 @@ aq_process <- function(data1) {
       -units_PM,
       -Daily.Max.8.hour.Ozone.Concentration,
       -units_O3
-      )
-  
+    )
   return(data1)
 }
 ```
@@ -108,28 +108,32 @@ aq_process <- function(data1) {
 aq18 <- aq_process(aq18)
 aq19 <- aq_process(aq19)
 head(aq18)
+# now for the next part of the function
 # testing which duplicates exist for certain days
-aq18 |> 
-  group_by(Dates) |> 
-  summarise(count = n()) |> 
-  filter(count > 1)
-```
-```{r, echo=FALSE, results='hide'}
-aq19 |>  # we have many days in 2019 alone with duplicates
-  group_by(Dates) |> 
-  summarise(count = n()) |> 
+aq18 |>
+  group_by(Dates) |>
+  summarise(count = n()) |>
   filter(count > 1)
 ```
 
 ```{r, echo=FALSE, results='hide'}
+aq19 |>  # we have many days in 2019 alone with duplicates
+  group_by(Dates) |>
+  summarise(count = n()) |>
+  filter(count > 1)
+```
+
+```{r, echo=FALSE, results='hide'}
+# function part two
+# reworking function to average/minimize down to one row only
+# reloading data so I do not need to run the whole document over and over
 aq18 <- read.csv("AQ_2018.csv", na.strings = c("", "NA", "NaN")) # 479 obs
 aq19 <- read.csv("AQ_2019.csv", na.strings = c("", "NA", "NaN")) # 494 obs
 aq20 <- read.csv("AQ_2020.csv", na.strings = c("", "NA", "NaN")) # 179 obs
-# function part two 
-# reworking function to average/minimize down to one row only
+
 aq_process1 <- function(data1) {
   # want to first rename pollutant concentration cols
-  data1 <- data1 |> 
+  data1 <- data1 |>
     mutate(
       Dates = mdy(data1$Date),
       CO_lvl = Daily.Max.8.hour.CO.Concentration,
@@ -138,7 +142,7 @@ aq_process1 <- function(data1) {
       PM_units = units_PM,
       OZONE_lvl = Daily.Max.8.hour.Ozone.Concentration,
       OZONE_units = units_O3
-      ) |> 
+    ) |>
     select(
       -Date,
       -Daily.Max.8.hour.CO.Concentration,
@@ -147,12 +151,11 @@ aq_process1 <- function(data1) {
       -units_PM,
       -Daily.Max.8.hour.Ozone.Concentration,
       -units_O3
-      ) 
-  data1 <- data1 |> 
-    group_by(Dates) |> # initally treid to filter only duplicates, but reomved
-    # single day observations, which is an issue
-    # this will average over days with one row only but should not impact
-    # the results
+    )
+  data1 <- data1 |>
+    group_by(Dates) |> # I want to call all dates (duplicate or not)
+    # this will average over days with one row only but should not impact them
+    # should only really change our duplicates
     summarise(
       CO_lvl    = mean(CO_lvl, na.rm = TRUE),
       CO_units  = first(CO_units),
@@ -161,18 +164,15 @@ aq_process1 <- function(data1) {
       OZONE_lvl = mean(OZONE_lvl, na.rm = TRUE),
       OZONE_units = first(OZONE_units),
       .groups = "drop"  # removing our duplicate rows now after taking mean
-    ) |> 
-    # problem with NaN sowing up after doing mean() on NAs
-    # should properly turn all NaN to NA for consistency
-     mutate(across(c(CO_lvl, PM_lvl, OZONE_lvl), ~na_if(., NaN))) 
-  
-  return(data1) 
+    ) |>
+    # problem with NaN sowing up after doing mean() on NAs -> so I fix it here. 
+    mutate(across(c(CO_lvl, PM_lvl, OZONE_lvl), ~na_if(., NaN)))
+  return(data1)
 }
-
 ```
 
 ```{r, echo=FALSE, results='hide'}
-# testing 2
+# testing 2 to see 365 observation
 aq18 <- aq_process1(aq18) # 361 obs (mising four days?)
 aq19 <- aq_process1(aq19) # 365 obs
 aq20 <- aq_process1(aq20) # 121 obs
@@ -180,23 +180,20 @@ aq20 <- aq_process1(aq20) # 121 obs
 
 ```{r, echo=FALSE, results='hide'}
 aq18 |>  # no duplicates yay!
-  group_by(Dates) |> 
-  summarise(count = n()) |> 
+  group_by(Dates) |>
+  summarise(count = n()) |>
   filter(count > 1)
-
-aq19 |>  # duplicates still exist...
-  group_by(Dates) |> 
-  summarise(count = n()) |> 
+aq19 |>  # no duplicates! 
+  group_by(Dates) |>
+  summarise(count = n()) |>
   filter(count > 1)
-
-# testing why aq17 has 361 observations, do not have data between 9/13-9/16 
+# testing why aq17 has 361 observations, do not have data between 9/13-9/16
 full_dates <- seq.Date(min(aq18$Dates), max(aq18$Dates), by = "day")
-
 missing_days <- setdiff(full_dates, unique(aq18$Dates))
-
 missing_days
 ```
 ```{r, echo=FALSE, results='hide'}
+# checking range of values for next part of function
 summary(aq18$CO_lvl) # min = 0.1 max = .9; good
 summary(aq18$PM_lvl) # not good, negatives
 summary(aq18$OZONE_lvl) # 0.015, max = .063; good
@@ -205,8 +202,8 @@ summary(aq19$CO_lvl) # good
 summary(aq19$PM_lvl) # good
 summary(aq19$OZONE_lvl) # good
 
-summary(aq20$CO_lvl) # good 
-summary(aq20$PM_lvl) # good 
+summary(aq20$CO_lvl) # good
+summary(aq20$PM_lvl) # good
 summary(aq20$OZONE_lvl) # good
 ```
 ```{r, echo=FALSE, results='hide'}
@@ -215,11 +212,11 @@ summary(aq20$OZONE_lvl) # good
 aq18 <- read.csv("AQ_2018.csv", na.strings = c("", "NA", "NaN")) # 479 obs
 aq19 <- read.csv("AQ_2019.csv", na.strings = c("", "NA", "NaN")) # 494 obs
 aq20 <- read.csv("AQ_2020.csv", na.strings = c("", "NA", "NaN")) # 179 obs
-# function part two 
+# function part two
 # reworking function to average/minimize down to one row only
 aq_process1 <- function(data1) {
   # want to first rename pollutant concentration cols
-  data1 <- data1 |> 
+  data1 <- data1 |>
     mutate(
       Dates = mdy(data1$Date),
       CO_lvl = Daily.Max.8.hour.CO.Concentration,
@@ -228,7 +225,7 @@ aq_process1 <- function(data1) {
       PM_units = units_PM,
       OZONE_lvl = Daily.Max.8.hour.Ozone.Concentration,
       OZONE_units = units_O3
-      ) |> 
+    ) |>
     select(
       -Date,
       -Daily.Max.8.hour.CO.Concentration,
@@ -237,8 +234,8 @@ aq_process1 <- function(data1) {
       -units_PM,
       -Daily.Max.8.hour.Ozone.Concentration,
       -units_O3
-      ) 
-  data1 <- data1 |> 
+    )
+  data1 <- data1 |>
     group_by(Dates) |> # initally treid to filter only duplicates, but reomved
     # single day observations, which is an issue
     # this will average over days with one row only but should not impact
@@ -251,47 +248,48 @@ aq_process1 <- function(data1) {
       OZONE_lvl = mean(OZONE_lvl, na.rm = TRUE),
       OZONE_units = first(OZONE_units),
       .groups = "drop"  # removing our duplicate rows now after taking mean
-    ) |> 
+    ) |>
     # problem with NaN sowing up after doing mean() on NAs
     # should properly turn all NaN to NA for consistency
-     mutate(across(c(CO_lvl, PM_lvl, OZONE_lvl), ~na_if(., NaN))) 
-  pollutants <- c("CO_lvl", "PM_lvl", "OZONE_lvl")
-  for(i in pollutants) {
+    mutate(across(c(CO_lvl, PM_lvl, OZONE_lvl), ~na_if(., NaN)))
+  pollutants <- c("CO_lvl", "PM_lvl", "OZONE_lvl") # doing so across all vars
+  for (i in pollutants) { # setting all those that are negative to 0
     col <- data1[[i]] # double brackets call out vector in our df
-    col[col < 0] <- 0 
+    col[col < 0] <- 0
     data1[[i]] <- col
   }
-  return(data1) 
+  return(data1)
 }
 ```
 
 ```{r, echo=FALSE, results='hide'}
-aq18 <- aq_process1(aq18) # 361 obs 
+# running complete function
+aq18 <- aq_process1(aq18) # 361 obs
 aq19 <- aq_process1(aq19) # 365 obs
 aq20 <- aq_process1(aq20) # 121 obs
 ```
 
 
 ```{r, echo=FALSE, results='hide'}
-# all good! all negative values removed
+# testing ranges: all negatives removed! 
 
-summary(aq18$CO_lvl) 
+summary(aq18$CO_lvl)
 summary(aq18$PM_lvl)  # main issue here resolved
-summary(aq18$OZONE_lvl) 
+summary(aq18$OZONE_lvl)
 
-summary(aq19$CO_lvl) 
-summary(aq19$PM_lvl) 
-summary(aq19$OZONE_lvl) 
+summary(aq19$CO_lvl)
+summary(aq19$PM_lvl)
+summary(aq19$OZONE_lvl)
 
-summary(aq20$CO_lvl) 
-summary(aq20$PM_lvl) 
-summary(aq20$OZONE_lvl) 
+summary(aq20$CO_lvl)
+summary(aq20$PM_lvl)
+summary(aq20$OZONE_lvl)
 ```
 
 ```{r, echo=FALSE, results='hide'}
 # joining our dataset for ease of plotting in next step with rbind()
-aq_full <- rbind(aq18, aq19, aq20) # 361 + 365 + 121 = 847
-dim(aq_full) # joined successfully 
+aq_full <- rbind(aq18, aq19, aq20)
+dim(aq_full) # joined successfully
 head(aq_full) # checking column names
 
 # will now be using aq_full dataset from here on out
@@ -299,53 +297,86 @@ head(aq_full) # checking column names
 
 # Plots
 
+After clean up of the data from the three datassets with a function and then 
+binding the cleaned up data to one dataframe we will now run some visualizations
+on the pollutants to assess patterns/trends. 
+
 ```{r, warning = FALSE, echo = FALSE, results= 'hide'}
 # plot 1
+# want to only get data by month so we mutate + group by Month
 aq_monthly <- aq_full |>  # wanting the months on our axis only not full date
-  mutate(Month = month(Dates, label = TRUE, abbr = TRUE)) |> 
-  group_by(Month) |> 
-  summarise(
-    CO_avg = mean(CO_lvl, na.rm = TRUE), # by month we take means 
+  mutate(Month = month(Dates, label = TRUE, abbr = TRUE)) |>
+  group_by(Month) |>
+  summarise( # calculating mean, count, and sd for the confidence interval part
+    CO_avg = mean(CO_lvl, na.rm = TRUE), # by month we take means
     CO_sd = sd(CO_lvl, na.rm = TRUE),
-    CO_n = n() - sum(is.na(CO_lvl)), # removing NA from n 
+    CO_n = n() - sum(is.na(CO_lvl)), # removing NA from n
     O3_avg = mean(OZONE_lvl, na.rm = TRUE),
     O3_sd = sd(OZONE_lvl, na.rm = TRUE),
     O3_n = n() - sum(is.na(OZONE_lvl)), # removing NA from n
     .groups = "drop" # dropping other rows we got avg from
-  ) |> 
-  mutate(
-    CO_se = CO_sd / sqrt(CO_n),               # standard error
+  ) |>
+  mutate( # now we conduct the C.I. with SE for our Margin of error
+    CO_se = CO_sd / sqrt(CO_n),               
     O3_se = O3_sd / sqrt(O3_n),
-    CO_upper = CO_avg + 1.96 * CO_se,        # 95% CI
+    CO_upper = CO_avg + 1.96 * CO_se,        
     CO_lower = CO_avg - 1.96 * CO_se,
     O3_upper = O3_avg + 1.96 * O3_se,
     O3_lower = O3_avg - 1.96 * O3_se
-  ) 
+  )
 head(aq_monthly)
-# now need to find  sd -> SE, to get our C.I. at 95%
+# now have complete bounds and SE for each contaminant
 ```
 
 ## Plot 1
 
-Text here.
+Here we have a plot with a change of CO and Ozone levels throughout the years 
+(2018-2020) for each month. On top of our points are the error bars telling 
+us the range of values around this estiamted point we are confident of the true 
+value based upon our C.I. of 95%. The y-axes are adjusted best show each 
+pollutant based on its typical observations, for Ozone it is measured at such a 
+lower concentration than CO it is hard to see the varition without separatig the 
+y-axes to fit for each pollutant. 
 
-```{r, warning = FALSE, echo = FALSE}
+Interestingly we see how over the months in a year (average for 2018-2020) we 
+see how CO carbon monoxide levels start higher then decrease mid year to increasing until 
+the end of the year, this woudl relate to hgiher emissions of cars and gasoline-
+type equipment in the colder months for warmth. 
 
-ggplot(aq_monthly, aes( x = Month)) + 
+On the otherhand O3 increases up in the summer probably as tempreature increase
+and then decreasing down as we enter witner in Durham. 
+
+```{r, warning = FALSE, echo = FALSE, message = FALSE, results= 'hide'}
+# plotting CO and O3 together
+
+# allows us to scale up O3 in terms of CO for purposes of the plot
+ ratio <- max(
+   aq_monthly$CO_avg, na.rm = TRUE) / max(aq_monthly$O3_avg, na.rm = TRUE) 
+# I add geon point and error bar for CO and O3 separetly for clarity 
+ggplot(aq_monthly, aes(x = Month)) +
   geom_point(aes(y = CO_avg, color = "CO")) + # plotting points for CO first
-  geom_errorbar(aes(ymin = CO_lower, ymax = CO_upper, color = "CO"), width = 0) +
-  geom_point(aes(y = O3_avg, color = "O3")) + # plotting O3 now 
-  geom_errorbar(aes(ymin = O3_lower, ymax = O3_upper, color = "O3"), width = 0) +
-  # removed top bars as it made O3 look scrunched up and odd with small CI
-  scale_color_manual(values = c("CO" = "dodgerblue2", "O3" = "darkorange1")) + 
-  # chose colors that stand out best
+  geom_errorbar(aes(ymin = CO_lower, ymax = CO_upper, color = "CO"),
+                width = 0) + # set error bar width = 0 to see better visually
+  # we want to see O3 better so use ratio here to scale up in the plot
+  geom_point(aes(y = O3_avg * ratio, color = "O3")) + # using ratio here
+  geom_errorbar(aes(ymin = O3_lower * ratio, ymax = O3_upper * ratio, color = "O3"),
+                width = 0) +
+  # setting to colors easy to see
+  scale_color_manual(values = c("CO" = "dodgerblue2", "O3" = "darkorange1")) +
+  scale_y_continuous(
+    name = "CO Concentration(ppm)",
+    sec.axis = sec_axis(~ . / ratio, name = "O3 Concentration(ug/m3 LC)")
+  ) +
+  # setting up titles 
   labs(
     title = "Plot1.Monthly Average CO and Ozone Concentrations (2018-2020)",
     y = "Concentrations",
     x = "Month",
     color = "Pollutant" # to fix legend
-  ) + 
-  theme_bw()
+  ) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+      legend.direction = "horizontal")
 
 ggsave(filename = "Plot1.png")
 
@@ -353,32 +384,51 @@ ggsave(filename = "Plot1.png")
 
 ## Plot 2
 
-Text here. 
+Here we are now intersted in exmaining the change in concentration of particle 
+over a year across 2018, 2019 and 2020. 
 
-```{r, fig.width=10, fig.height= 12, warning = FALSE, echo = FALSE}
-# plot 2 
-# will copy what I did for Month from pot1 for here
+These boxplots show varying trends of our observed PM2.5 values showing a steady
+pattern in 2018 with a noticeable dip down in September but back to a slow climb 
+to where the median in the barplot lies. 2019 looks more stable than 2018 with 
+no big drop noticed at any one point, then 2020 with only data up until 2020
+we see a clear inrease in PM2.5, but our PM2.5 concetration in January differs a 
+bit from the other two years startin lower from 10 ppm and slowly to April aporahces 
+10 ppm where our other two years hover around year round for the most part. 
+
+However across each year at various months we see noticelable outliers. 
+
+
+```{r, warning = FALSE, echo = FALSE, message = FALSE, results= 'hide', fig.width= 8, fig.height= 8}
+# plot 2
+# will copy what I did for Month from plot1 for here
 pm_monthly <- aq_full |>  # wanting the months on our axis only not full date
   mutate(
     Month = month(Dates, label = TRUE, abbr = TRUE),
     Year = year(Dates),
     Years = as.factor(Year)
-    ) 
-         
+  )
 ggplot(pm_monthly, aes(x = Month, y = PM_lvl, color = Years)) +
   geom_boxplot() +
-  facet_wrap(~ Years, ncol = 1, scales = "free_x")   +
-  scale_color_manual(values = c("2018" = "mediumvioletred", "2019" = "seagreen3", "2020" = "royalblue2")) +
+  # I want to see each year better so I separated each year out
+  # chose to let X fit to 2020 better for missing months for better view
+  facet_wrap(~ Years, ncol = 1, scales = "free_x")   + 
+  scale_color_manual(
+                     values =
+                       c(
+                         "2018" = "mediumvioletred", # glinda
+                         "2019" = "seagreen3", # elphaba
+                         "2020" = "royalblue2")) + # blue
   labs(
     title = "Plot2.PM2.5 Concentration by Month (2018-2020)",
-    y = "PM2.5",
+    y = "PM2.5(ppm)",
     x = "Month",
     color = "Year"
-  ) + 
-  theme_bw()
-
+  ) +
+  theme_bw() +
+  theme(legend.text = element_text(size = 12)) # changing size to see better
 ggsave(filename = "Plot2.png")
-
 ```
+
+
 
 
