@@ -1,7 +1,9 @@
 ---
 title: "Project2_Khan"
 author: "Zahra Khan"
-format: docx 
+format:
+  docx:
+    toc: true
 ---
 
 [Zahra's Project2 GitHub](https://github.com/zahra-khan2/biostat721_project2.git)
